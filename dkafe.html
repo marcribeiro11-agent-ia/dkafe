@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DKafe — Daniel Da Silva</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --espresso:#1a0f00;--coffee:#3d1f00;--caramel:#a0522d;
+  --latte:#c8956a;--cream:#f5ece2;--foam:#fdf8f3;
+}
+body{font-family:'DM Sans',sans-serif;background:#e8d9c8;min-height:100vh;color:var(--espresso);-webkit-font-smoothing:antialiased}
+button,input,select{font-family:inherit}
+
+/* NAV */
+.nav{display:flex;background:var(--espresso);position:sticky;top:0;z-index:100;border-bottom:2px solid var(--caramel)}
+.nav-btn{flex:1;padding:14px 4px;border:none;cursor:pointer;background:transparent;color:var(--latte);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;transition:all .2s;line-height:1.4}
+.nav-btn .icon{font-size:18px;display:block;margin-bottom:2px}
+.nav-btn.active{background:var(--caramel);color:var(--foam)}
+
+/* PAGES */
+.page{display:none;padding-bottom:80px}
+.page.active{display:block}
+
+/* ── TRACKER ── */
+.stats{background:var(--coffee);padding:20px 16px;display:flex;justify-content:space-around}
+.stat-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--foam);text-align:center;line-height:1}
+.stat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--latte);text-align:center;margin-top:3px}
+.progress-bar-wrap{background:var(--cream);padding:12px 16px;display:flex;align-items:center;gap:12px}
+.progress-bar{flex:1;height:6px;background:rgba(160,82,45,.2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--caramel);transition:width .4s;border-radius:3px}
+.progress-txt{font-size:11px;color:var(--coffee);font-weight:500;white-space:nowrap}
+.progress-num{font-size:11px;color:var(--caramel);font-weight:600;white-space:nowrap}
+
+.cafe-card{margin:8px 12px;background:var(--foam);box-shadow:0 2px 12px rgba(26,15,0,.08);border:2px solid transparent;transition:border .2s}
+.cafe-card.open{border-color:var(--caramel)}
+.cafe-row{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
+.cafe-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--latte);min-width:22px}
+.cafe-info{flex:1;min-width:0}
+.cafe-name{font-size:14px;font-weight:600;color:var(--espresso);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cafe-name.empty{font-weight:400;color:rgba(160,82,45,.35)}
+.cafe-area{font-size:11px;color:var(--caramel);margin-top:2px}
+.status-badge{font-size:10px;font-weight:600;padding:4px 10px;border-radius:2px;white-space:nowrap;flex-shrink:0}
+.chevron{color:var(--latte);font-size:12px;transition:transform .2s;flex-shrink:0}
+.cafe-card.open .chevron{transform:rotate(180deg)}
+
+.cafe-edit{display:none;padding:0 14px 16px;border-top:1px solid rgba(160,82,45,.1)}
+.cafe-card.open .cafe-edit{display:block}
+.field-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--caramel);margin-bottom:4px;margin-top:12px}
+.field-input{width:100%;border:none;border-bottom:1px solid rgba(160,82,45,.25);background:transparent;padding:6px 0;font-size:14px;color:var(--espresso);outline:none}
+.field-input::placeholder{color:rgba(160,82,45,.3);font-weight:300}
+.status-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.status-btn{padding:5px 11px;border:none;cursor:pointer;border-radius:2px;font-size:11px;font-weight:600;transition:all .15s}
+
+/* ── SCRIPT ── */
+.script-header{background:var(--coffee);padding:20px 16px}
+.script-header .eyebrow{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--latte);margin-bottom:8px}
+.script-header h1{font-family:'Playfair Display',serif;font-size:22px;color:var(--foam);font-style:italic;line-height:1.4}
+.script-header p{font-size:12px;color:rgba(245,236,226,.6);margin-top:8px;line-height:1.6}
+.warning-box{margin:12px 12px 0;padding:14px 16px;background:rgba(160,82,45,.12);border-left:4px solid var(--caramel);font-size:13px;color:var(--coffee);line-height:1.6}
+.warning-box strong{color:var(--caramel)}
+
+.section-card{margin:8px 12px;background:var(--foam);box-shadow:0 2px 12px rgba(26,15,0,.08)}
+.section-header{background:var(--coffee);padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.section-header:active{background:var(--espresso)}
+.section-num{font-size:10px;letter-spacing:2px;color:var(--latte);min-width:24px;font-family:'DM Mono',monospace}
+.section-titles{flex:1}
+.section-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--foam)}
+.section-tag{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,149,106,.7);margin-top:2px}
+.section-body{display:none;padding:16px}
+.section-card.open .section-body{display:block}
+.section-card.open .chevron{transform:rotate(180deg)}
+
+.speech-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--caramel);margin-bottom:6px}
+.speech-bubble{background:var(--cream);border-left:4px solid var(--caramel);padding:14px 16px;font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:var(--espresso);line-height:1.75;margin-bottom:10px}
+.tip{font-size:12px;color:var(--caramel);line-height:1.6;margin-bottom:14px;padding-left:2px}
+.objection-block{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid rgba(160,82,45,.1)}
+.objection-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.obj-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#9b2335;margin-bottom:6px}
+.obj-text{background:rgba(155,35,53,.06);border-left:3px solid rgba(155,35,53,.3);padding:10px 14px;font-style:italic;font-size:13px;color:var(--espresso);margin-bottom:10px;line-height:1.6}
+.rep-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#2d6a4f;margin-bottom:6px}
+.rule-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(160,82,45,.08);align-items:flex-start}
+.rule-item:last-child{border-bottom:none}
+.rule-icon{font-size:18px;flex-shrink:0}
+.rule-text{font-size:13px;color:var(--coffee);line-height:1.55}
+
+/* ── ONE-PAGER ── */
+.op-header{background:var(--espresso);padding:28px 20px}
+.op-eyebrow{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--latte);margin-bottom:10px}
+.op-header h1{font-family:'Playfair Display',serif;font-size:30px;color:var(--foam);font-weight:700;line-height:1.2}
+.op-header h1 em{font-style:italic;color:var(--latte)}
+.op-header p{font-size:12px;color:rgba(245,236,226,.55);margin-top:10px;line-height:1.6}
+.op-section{padding:18px 20px;border-bottom:1px solid rgba(160,82,45,.1)}
+.op-section-title{font-size:9px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--caramel);margin-bottom:12px}
+.op-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.op-dot{width:6px;height:6px;border-radius:50%;background:var(--caramel);margin-top:6px;flex-shrink:0}
+.op-item-text{font-size:13px;color:var(--coffee);line-height:1.55}
+.price-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:8px;background:rgba(160,82,45,.06);border-left:3px solid var(--caramel)}
+.price-label{font-size:13px;color:var(--coffee)}
+.price-size{font-size:11px;color:var(--latte);margin-left:6px}
+.price-amount{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--espresso)}
+.options-row{display:flex;gap:12px;padding:18px 20px;border-bottom:1px solid rgba(160,82,45,.1)}
+.option-box{flex:1;padding:14px;border:1px solid rgba(160,82,45,.2);background:var(--foam)}
+.option-box.highlight{background:var(--espresso);border-color:var(--espresso);position:relative}
+.option-tag-sm{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--caramel);margin-bottom:6px}
+.option-box.highlight .option-tag-sm{color:var(--latte)}
+.option-title-sm{font-family:'Playfair Display',serif;font-size:14px;color:var(--espresso);margin-bottom:6px}
+.option-box.highlight .option-title-sm{color:var(--foam)}
+.option-desc-sm{font-size:12px;color:var(--coffee);line-height:1.5;font-weight:300}
+.option-box.highlight .option-desc-sm{color:rgba(245,236,226,.7)}
+.recommended{position:absolute;top:-10px;right:10px;background:var(--caramel);color:#fff;font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px}
+.op-footer{background:var(--espresso);padding:22px 20px}
+.contact-lbl{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--latte);margin-bottom:12px}
+.contact-line{font-size:13px;color:var(--foam);margin-bottom:6px}
+.op-quote{margin-top:16px;font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:rgba(245,236,226,.35);line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('tracker',this)">
+    <span class="icon">📋</span>Tracker
+  </button>
+  <button class="nav-btn" onclick="showPage('script',this)">
+    <span class="icon">🗣️</span>Script
+  </button>
+  <button class="nav-btn" onclick="showPage('onepager',this)">
+    <span class="icon">📄</span>One-Pager
+  </button>
+</nav>
+
+<!-- ════════════════════════════════════════════════
+     PAGE : TRACKER
+════════════════════════════════════════════════ -->
+<div id="page-tracker" class="page active">
+
+  <div class="stats">
+    <div><div class="stat-num" id="s-visites">0</div><div class="stat-lbl">Visités</div></div>
+    <div><div class="stat-num" id="s-interesses">0</div><div class="stat-lbl">Intéressés</div></div>
+    <div><div class="stat-num" id="s-exposes">0</div><div class="stat-lbl">Exposés</div></div>
+    <div><div class="stat-num" id="s-vendus">0</div><div class="stat-lbl">Vendus 🎉</div></div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-num" id="prog-num">0/15</div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="progress-txt">cafés visités</div>
+  </div>
+
+  <div id="cafe-list"></div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE : SCRIPT
+════════════════════════════════════════════════ -->
+<div id="page-script" class="page">
+
+  <div class="script-header">
+    <div class="eyebrow">Script de vente · @_dkafe</div>
+    <h1>Ce que tu dis,<br>mot pour mot.</h1>
+    <p>Lis une fois. Entraîne-toi deux fois. Puis parle naturellement.</p>
+  </div>
+
+  <div class="warning-box"><strong>Règle d'or :</strong> Tu n'es pas un vendeur. Tu es un artiste qui propose quelque chose d'utile. Cette posture change tout dans ta voix et ton langage corporel.</div>
+
+  <!-- Section 01 -->
+  <div class="section-card" id="sc0">
+    <div class="section-header" onclick="toggleSection('sc0')">
+      <span class="section-num">01</span>
+      <div class="section-titles">
+        <div class="section-title">L'entrée dans le café</div>
+        <div class="section-tag">Les 30 premières secondes</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="tip">Tu entres. Tu ne rushes pas. Tu commandes un café si possible. Tu attends un moment calme. Tu souris.</div>
+      <div class="speech-label">Ce que tu dis</div>
+      <div class="speech-bubble">"Bonjour — je m'appelle Daniel, je suis artiste. Je peins uniquement avec du café, pas une goutte d'encre. J'ai quelques photos à vous montrer, ça prend 30 secondes. C'est possible ?"</div>
+      <div class="tip">Ne dépasse pas ces deux phrases. Laisse-le dire oui avant de continuer.</div>
+      <div class="speech-label">S'il dit oui</div>
+      <div class="speech-bubble">"Chaque nuance, chaque ombre — c'est uniquement de la concentration de café. Aucun autre produit. Ce qui m'intéresse, c'est de travailler avec des cafés comme le vôtre, parce que c'est votre matière première. Vos clients auraient une vraie histoire à raconter."</div>
+      <div class="tip">Arrête-toi ici. Laisse le silence faire son travail. Ne meubles pas.</div>
+    </div>
+  </div>
+
+  <!-- Section 02 -->
+  <div class="section-card" id="sc1">
+    <div class="section-header" onclick="toggleSection('sc1')">
+      <span class="section-num">02</span>
+      <div class="section-titles">
+        <div class="section-title">Proposer les options</div>
+        <div class="section-tag">Réduire le risque perçu</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="speech-label">S'il est intéressé</div>
+      <div class="speech-bubble">"Je propose deux formules simples. Soit vous achetez directement une toile — les tarifs vont de 150 à 700 CHF selon le format. Soit on fait quelque chose sans risque pour vous : j'expose une toile ici pendant un mois. Si elle se vend, vous touchez 10%. Sinon, je la récupère et vous n'avez rien déboursé."</div>
+      <div class="tip">Mets l'accent sur "sans risque pour vous" et "vous touchez 10%".</div>
+      <div class="speech-label">Ensuite, juste ça</div>
+      <div class="speech-bubble">"Quelle option vous parle le plus ?"</div>
+      <div class="tip">Tu poses la question et tu te tais. Pas de remplissage. Le silence travaille pour toi.</div>
+    </div>
+  </div>
+
+  <!-- Section 03 -->
+  <div class="section-card" id="sc2">
+    <div class="section-header" onclick="toggleSection('sc2')">
+      <span class="section-num">03</span>
+      <div class="section-titles">
+        <div class="section-title">Les objections</div>
+        <div class="section-tag">Réponses mot pour mot</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="objection-block">
+        <div class="obj-label">Objection 1</div>
+        <div class="obj-text">"Je dois réfléchir / en parler à mon associé."</div>
+        <div class="rep-label">Ta réponse</div>
+        <div class="speech-bubble">"Pas de souci du tout. Je vous laisse une fiche avec mes contacts. Je repasse dans une semaine — ou envoyez-moi un message quand vous êtes prêt. leite.ds@outlook.com"</div>
+        <div class="tip">→ Ne relance pas avant 7 jours. Une relance trop rapide tue l'intérêt.</div>
+      </div>
+      <div class="objection-block">
+        <div class="obj-label">Objection 2</div>
+        <div class="obj-text">"C'est trop cher pour nous."</div>
+        <div class="rep-label">Ta réponse</div>
+        <div class="speech-bubble">"Je comprends totalement. C'est pour ça que la consignation existe — vous ne dépensez rien. Un mois d'essai, si ça ne convient pas, je reprends la toile. Zéro engagement financier."</div>
+        <div class="tip">→ Ne baisse JAMAIS le prix. Redirige toujours vers la consignation.</div>
+      </div>
+      <div class="objection-block">
+        <div class="obj-label">Objection 3</div>
+        <div class="obj-text">"On n'expose pas d'art ici."</div>
+        <div class="rep-label">Ta réponse</div>
+        <div class="speech-bubble">"Je comprends. Ce n'est pas une galerie — juste une toile sur un mur. Ça crée une atmosphère. Mais si ce n'est vraiment pas dans votre vision, pas de problème, je respecte ça."</div>
+        <div class="tip">→ Si la réponse reste non, souris et pars dignement. Il peut te recommander.</div>
+      </div>
+      <div class="objection-block">
+        <div class="obj-label">Objection 4</div>
+        <div class="obj-text">"Vous avez un site / des références ?"</div>
+        <div class="rep-label">Ta réponse</div>
+        <div class="speech-bubble">"Mon Instagram @_dkafe — vous voyez toutes mes créations et le processus complet."</div>
+        <div class="tip">→ Assure-toi que l'Instagram est propre avant de commencer la tournée.</div>
+      </div>
+      <div class="objection-block">
+        <div class="obj-label">Objection 5</div>
+        <div class="obj-text">"Le gérant n'est pas là."</div>
+        <div class="rep-label">Ta réponse</div>
+        <div class="speech-bubble">"Pas de problème. Il s'appelle comment ? Je peux laisser une fiche pour lui ?"</div>
+        <div class="tip">→ Note le prénom dans le tracker. Quand tu reviens, tu l'appelles par son prénom.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 04 -->
+  <div class="section-card" id="sc3">
+    <div class="section-header" onclick="toggleSection('sc3')">
+      <span class="section-num">04</span>
+      <div class="section-titles">
+        <div class="section-title">Le closing</div>
+        <div class="section-tag">S'il dit oui</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="speech-label">S'il accepte la consignation</div>
+      <div class="speech-bubble">"Parfait. Je vous apporte la toile dans X jours. On fait un petit accord écrit — juste le titre, le prix, et les 10% pour vous si elle se vend. Je veux que ce soit propre pour vous comme pour moi."</div>
+      <div class="tip">→ Toujours un accord écrit, même un simple email. Ça professionnalise.</div>
+      <div class="speech-label">S'il achète directement</div>
+      <div class="speech-bubble">"Super. Je vous apporte la toile avec son certificat d'authenticité. Pour le paiement, virement ou cash, comme vous préférez."</div>
+      <div class="tip">→ Mentionne toujours le certificat d'authenticité — ça justifie le prix.</div>
+    </div>
+  </div>
+
+  <!-- Section 05 -->
+  <div class="section-card" id="sc4">
+    <div class="section-header" onclick="toggleSection('sc4')">
+      <span class="section-num">05</span>
+      <div class="section-titles">
+        <div class="section-title">Les règles absolues</div>
+        <div class="section-tag">À ne jamais oublier</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="rule-item"><span class="rule-icon">🤐</span><span class="rule-text">Le silence est ton allié. Après chaque question, tu te tais. La personne qui parle en premier après une question est celle qui cède.</span></div>
+      <div class="rule-item"><span class="rule-icon">💰</span><span class="rule-text">Ne baisse jamais le prix. Si c'est trop cher → consignation. Jamais de réduction — ça dévalue l'œuvre pour toujours.</span></div>
+      <div class="rule-item"><span class="rule-icon">📱</span><span class="rule-text">Instagram propre avant de commencer. 10 belles photos valent mieux que 100 posts quelconques.</span></div>
+      <div class="rule-item"><span class="rule-icon">📝</span><span class="rule-text">Note tout dans le tracker. Le prénom du gérant, ce qu'il a dit, quand relancer.</span></div>
+      <div class="rule-item"><span class="rule-icon">🚶</span><span class="rule-text">5 cafés par semaine minimum. Sur 15 visites → 3-4 oui → 1 vente. C'est un jeu de volume.</span></div>
+      <div class="rule-item"><span class="rule-icon">😌</span><span class="rule-text">Un non n'est pas un échec. Remercie, souris, sors dignement. Ce gérant peut te recommander demain.</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE : ONE-PAGER
+════════════════════════════════════════════════ -->
+<div id="page-onepager" class="page">
+
+  <div class="op-header">
+    <div class="op-eyebrow">Art original · Peinture au café</div>
+    <h1>Daniel Da Silva<br><em>peint avec du café</em></h1>
+    <p>Du grain à la toile — aucune encre, aucune peinture chimique. Uniquement du café.</p>
+  </div>
+
+  <div class="op-section">
+    <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:var(--coffee);line-height:1.7">
+      Chaque nuance, chaque ombre, chaque trait est obtenu en jouant avec la <strong style="font-style:normal;color:var(--caramel)">concentration et l'oxydation du café</strong>. Une technique rare, une signature visuelle immédiatement reconnaissable — et une histoire que vos clients retiennent.
+    </div>
+  </div>
+
+  <div class="op-section">
+    <div class="op-section-title">Ce que vous exposez</div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Des œuvres uniques, signées et numérotées</div></div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Formats variés : de la toile intimiste à la pièce maîtresse murale</div></div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Un médium identitaire — le café comme matière première, pas comme gadget</div></div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Certificat d'authenticité fourni avec chaque œuvre</div></div>
+  </div>
+
+  <div class="op-section">
+    <div class="op-section-title">Ce que ça vous apporte</div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Une identité visuelle forte — votre espace se distingue</div></div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Un sujet de conversation naturel pour vos clients</div></div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Exposition sans risque possible en consignation</div></div>
+    <div class="op-item"><div class="op-dot"></div><div class="op-item-text">Cohérence totale avec l'univers café que vous incarnez</div></div>
+  </div>
+
+  <div class="op-section">
+    <div class="op-section-title">Tarifs indicatifs</div>
+    <div class="price-row"><div><span class="price-label">Format Espresso</span><span class="price-size">30 × 40 cm</span></div><div class="price-amount">150–300 CHF</div></div>
+    <div class="price-row"><div><span class="price-label">Format Lungo</span><span class="price-size">50 × 70 cm</span></div><div class="price-amount">400–700 CHF</div></div>
+    <div class="price-row"><div><span class="price-label">Format Grand Cru</span><span class="price-size">sur mesure</span></div><div class="price-amount">sur devis</div></div>
+  </div>
+
+  <div class="options-row">
+    <div class="option-box">
+      <div class="option-tag-sm">Option A</div>
+      <div class="option-title-sm">Achat direct</div>
+      <div class="option-desc-sm">Vous acquérez la toile définitivement.</div>
+    </div>
+    <div class="option-box highlight">
+      <div class="recommended">Recommandé</div>
+      <div class="option-tag-sm">Option B</div>
+      <div class="option-title-sm">Consignation</div>
+      <div class="option-desc-sm">4 semaines. Si vendue → 10% pour vous. Zéro risque.</div>
+    </div>
+  </div>
+
+  <div class="op-footer">
+    <div class="contact-lbl">Contact</div>
+    <div class="contact-line">✉ leite.ds@outlook.com</div>
+    <div class="contact-line">📷 @_dkafe</div>
+    <div class="op-quote">"L'art qui sent le café que vous servez."</div>
+  </div>
+
+</div>
+
+<script>
+// ── NAV ──────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── SECTIONS ─────────────────────────────────────
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ── TRACKER DATA ─────────────────────────────────
+const STATUS = {
+  'a-visiter': { label: 'À visiter',       bg: '#f0ebe5', color: '#888888' },
+  'visite':    { label: 'Visité',           bg: '#fde8d4', color: '#e07b39' },
+  'interesse': { label: 'Intéressé',        bg: '#dbeafe', color: '#1d4e6b' },
+  'expose':    { label: 'Toile exposée',    bg: '#d8f3dc', color: '#2d6a4f' },
+  'vendu':     { label: 'Vendu 🎉',         bg: '#1a0f00', color: '#c8956a' },
+  'non':       { label: 'Pas intéressé',   bg: '#fde8e8', color: '#9b2335' },
+};
+
+function loadRows() {
+  try {
+    const s = localStorage.getItem('dkafe-v3');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return Array.from({length:15}, (_,i) => ({
+    id: i+1, nom:'', quartier:'', statut:'a-visiter',
+    dateVisite:'', relance:'', notes:''
+  }));
+}
+
+let rows = loadRows();
+
+function save() {
+  try { localStorage.setItem('dkafe-v3', JSON.stringify(rows)); } catch(e) {}
+  updateStats();
+}
+
+function updateStats() {
+  const v = rows.filter(r => r.statut !== 'a-visiter').length;
+  const i = rows.filter(r => ['interesse','expose','vendu'].includes(r.statut)).length;
+  const e = rows.filter(r => r.statut === 'expose').length;
+  const vd = rows.filter(r => r.statut === 'vendu').length;
+  document.getElementById('s-visites').textContent = v;
+  document.getElementById('s-interesses').textContent = i;
+  document.getElementById('s-exposes').textContent = e;
+  document.getElementById('s-vendus').textContent = vd;
+  document.getElementById('prog-num').textContent = v + '/15';
+  document.getElementById('prog-fill').style.width = (v/15*100) + '%';
+}
+
+// ── RENDER TRACKER ───────────────────────────────
+let openCard = null;
+
+function renderTracker() {
+  const list = document.getElementById('cafe-list');
+  list.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const sc = STATUS[row.statut] || STATUS['a-visiter'];
+    const isOpen = openCard === idx;
+
+    const card = document.createElement('div');
+    card.className = 'cafe-card' + (isOpen ? ' open' : '');
+    card.id = 'card-' + idx;
+
+    card.innerHTML = `
+      <div class="cafe-row" onclick="toggleCard(${idx})">
+        <div class="cafe-num">${String(row.id).padStart(2,'0')}</div>
+        <div class="cafe-info">
+          <div class="cafe-name${row.nom ? '' : ' empty'}">${row.nom || 'Nom du café...'}</div>
+          ${row.quartier ? `<div class="cafe-area">${row.quartier}</div>` : ''}
+        </div>
+        <div class="status-badge" style="background:${sc.bg};color:${sc.color}">${sc.label}</div>
+        <div class="chevron" style="${isOpen ? 'transform:rotate(180deg)' : ''}">▼</div>
+      </div>
+      <div class="cafe-edit" style="display:${isOpen ? 'block' : 'none'}">
+        <div class="field-label">Nom du café</div>
+        <input class="field-input" placeholder="Ex: Café Lulu" value="${row.nom}" oninput="updateField(${idx},'nom',this.value)">
+        <div class="field-label">Quartier / ville</div>
+        <input class="field-input" placeholder="Ex: Plainpalais, Genève" value="${row.quartier}" oninput="updateField(${idx},'quartier',this.value)">
+        <div class="field-label">Date de visite</div>
+        <input class="field-input" placeholder="jj/mm" value="${row.dateVisite}" oninput="updateField(${idx},'dateVisite',this.value)">
+        <div class="field-label">Relance prévue</div>
+        <input class="field-input" placeholder="jj/mm" value="${row.relance}" oninput="updateField(${idx},'relance',this.value)">
+        <div class="field-label">Notes</div>
+        <input class="field-input" placeholder="Gérant sympa, intéressé par grande toile..." value="${row.notes}" oninput="updateField(${idx},'notes',this.value)">
+        <div class="field-label">Statut</div>
+        <div class="status-btns">
+          ${Object.entries(STATUS).map(([key,cfg]) => `
+            <button class="status-btn"
+              style="background:${row.statut===key ? cfg.color : cfg.bg};color:${row.statut===key ? '#fff' : cfg.color};outline:${row.statut===key ? '2px solid '+cfg.color : 'none'}"
+              onclick="updateField(${idx},'statut','${key}')">${cfg.label}</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+  updateStats();
+}
+
+function toggleCard(idx) {
+  openCard = openCard === idx ? null : idx;
+  renderTracker();
+}
+
+function updateField(idx, field, value) {
+  rows[idx][field] = value;
+  save();
+  // Re-render only the badge and name without full re-render
+  if (field === 'statut' || field === 'nom' || field === 'quartier') {
+    renderTracker();
+  }
+}
+
+renderTracker();
+</script>
+</body>
+</html>
